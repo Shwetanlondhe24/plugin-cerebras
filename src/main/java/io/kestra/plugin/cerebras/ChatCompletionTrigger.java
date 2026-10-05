@@ -10,16 +10,10 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionTrigger;
-import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.PollingTriggerInterface;
-import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.models.triggers.TriggerOutput;
+import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.utils.IdUtils;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -203,15 +197,7 @@ public class ChatCompletionTrigger extends AbstractTrigger implements PollingTri
 
         var flow = conditionContext.getFlow();
 
-        var execution = Execution.builder()
-            .id(IdUtils.create())
-            .tenantId(flow.getTenantId())
-            .namespace(flow.getNamespace())
-            .flowId(flow.getId())
-            .flowRevision(flow.getRevision())
-            .state(new State())
-            .trigger(ExecutionTrigger.of(this, output))
-            .build();
+        var execution = TriggerService.generateExecution(this, conditionContext, context, output);
 
         return Optional.of(execution);
     }
