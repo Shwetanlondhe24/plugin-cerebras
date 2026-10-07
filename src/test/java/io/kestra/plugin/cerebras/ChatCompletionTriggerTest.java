@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.property.Property;
@@ -90,6 +91,29 @@ class ChatCompletionTriggerTest extends AbstractCerebrasTest {
                 .withHeader("Authorization", equalTo("Bearer " + API_KEY))
                 .withRequestBody(matchingJsonPath("$.model", equalTo("gpt-oss-120b")))
                 .withRequestBody(matchingJsonPath("$.messages[0].role", equalTo("user")))
+        );
+    }
+
+    @Test
+    void shouldKeepTriggerLabelsAndUseTriggerExecutionId() throws Exception {
+        stubCompletion("NO");
+
+        var trigger = trigger()
+            .labels(List.of(new Label("team", "ai")))
+            .stopCondition(Property.ofExpression("{{ trigger.output == 'NO' }}"))
+            .build();
+
+        var mocked = TestsUtils.mockTrigger(runContextFactory, trigger);
+        var execution = trigger.evaluate(mocked.getKey(), mocked.getValue());
+
+        assertThat(execution.isPresent(), is(true));
+        assertThat(
+            execution.get().getLabels(),
+            hasItems(new Label("team", "ai"), new Label(Label.FROM, "trigger"))
+        );
+        assertThat(
+            execution.get().getId(),
+            is(mocked.getKey().getRunContext().getTriggerExecutionId())
         );
     }
 
