@@ -195,8 +195,6 @@ public class ChatCompletionTrigger extends AbstractTrigger implements PollingTri
             .response(response)
             .build();
 
-        var flow = conditionContext.getFlow();
-
         var execution = TriggerService.generateExecution(this, conditionContext, context, output);
 
         return Optional.of(execution);
